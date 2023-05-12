@@ -80,8 +80,11 @@ kubectl version --client
 
 aws configure
   AK*********BSER
+  
   cmN*****************U
+  
   us-west-1
+  
   json
 
 .##### Get KubeConfig file #####
