@@ -1,6 +1,6 @@
 
 Amazon EKS Infrastructure & Networking 
-This repository serves as a Standard Operating Procedure (SOP) for provisioning a secure, scalable Amazon EKS (v1.35) cluster. 
+This repository serves as a Standard Operating Procedure for provisioning a secure, scalable Amazon EKS (v1.35) cluster. 
 
 VPC Architecture & Networking
 A production-grade EKS environment requires a high-availability network topology:
