@@ -1,110 +1,69 @@
-# eks-set-up
-1) Create Dedicated VPC For EKS Cluster. Create Dedicated VPC For EKS Cluster. When you create a cluster, the VPC that you specify must meet the following requirements and considerations:
-    
-1.1) The VPC must have a sufficient number of IP addresses available for the cluster, any nodes, and other Kubernetes resources that you want to create
 
-1.2)The VPC must have DNS hostname and DNS resolution support. Otherwise, nodes can't register to your cluster.
+Amazon EKS Infrastructure & Networking Setup
 
-1.3) This VPC has two public and two private subnets. A public subnet's associated route table has a route to an internet gateway. However, the route table of a private subnet doesn’t have a route to an internet gateway. One public and one private subnet are deployed to the same Availability Zone. The other public and private subnets are deployed to a second Availability Zone in the same AWS Region. We recommend this option for most deployments.With this option, you can deploy your nodes to private subnets. This option allows Kubernetes to deploy load balancers to the public subnets that can load balance traffic to pods that run on nodes in the private subnets. Public IPv4 addresses are automatically assigned to nodes that are deployed to public subnets, but public IPv4 addresses aren't assigned to nodes deployed to private subnets.
+This repository provides a step-by-step blueprint for configuring a production-ready Amazon EKS (Elastic Kubernetes Service) environment. It covers VPC networking requirements, IAM security policies, and the installation of essential Kubernetes drivers.
 
-     
-2) Create IAM Role For EKS Cluster.
-      EKS – Cluster   
-      eks-demo-iam-role
+1. VPC Networking Requirements
+A dedicated VPC must be created to satisfy the following EKS requirements:
 
-3) Create EKS Cluster.
-   GUI - Console
-  commands:
-      aws eks create-cluster  
-      eksctl create-cluster 
+IP Availability: Sufficient IP addresses for nodes, pods, and resources.
 
-      aws s3 ls 
-      aws eks list-clusters 
-  IaC = tERRAFORM
+DNS Support: DNS hostnames and resolution must be enabled for node registration.
 
-4) Create IAM Role For EKS Worker Nodes with the policies below.
-    
-        AmazonEKSWorkerNodePolicy
-        AmazonEKS_CNI_Policy
-        AmazonEC2ContainerRegistryReadOnly
-        AmazonEBSCSIDriverPolicy 
+Subnet Strategy: A 4-subnet architecture (2 Public, 2 Private) across two Availability Zones.
 
-5) Create Worker Nodes.
+Nodes reside in private subnets for security.
 
+Load Balancers reside in public subnets to route external traffic.
 
-6) Create An Instance (If Not Exists) Install AWS CLI , IAM Authenticator And kubectl. Configure AWS CLI using Root or IAM User Access Key & Secret Key. Or Attach IAM With Required       Policies.
+2. Identity & Access Management (IAM)
+Proper roles are required for the cluster to interact with AWS services:
 
+EKS Cluster Role
+Create an IAM role (e.g., eks-demo-iam-role) to allow the EKS control plane to manage resources on your behalf.
 
-####Setup K8s Client Machine #####
+Worker Node Policies
+Worker nodes must be attached to a role containing these specific policies:
 
-### Install Kubectl In Linux====
+AmazonEKSWorkerNodePolicy: Core node functionality.
 
-1) Install Download the latest kubectl release with the command:
+AmazonEKS_CNI_Policy: Networking interface support.
+
+AmazonEC2ContainerRegistryReadOnly: Ability to pull images from ECR.
+
+AmazonEBSCSIDriverPolicy: Permission to manage EBS storage volumes.
+
+3. Client Machine Configuration
+To manage the cluster, your local or EC2-based management machine requires the following tools:
+
+Install Kubectl
+Bash
 
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+Install AWS CLI & Configure
+Bash
 
-
-
-2) Make the kubectl binary executable. 
-
-     chmod +x ./kubectl
-   
-3) Move the binary in to your PATH.
-
-      sudo mv ./kubectl /usr/local/bin/kubectl
-4) Test to ensure the version you installed is up-to-date:
-
-kubectl version --client   
-
-
-### Install aws CLI In Linux====
-
-1) Download AWS CLI ZIP
-    
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-
-2) Download & Install Unzip
-    sudo yum install unzip -y
-
-3) Extract Zip 
-    unzip awscliv2.zip
-  
-4) Install
-  sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
-  
-5) Verify
-  aws --version 
-  
-  
-######## Configure AWS CLI using ACCESS Key & Secret Key ########
-
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 aws configure
+4. Cluster Connectivity & Storage
+Once the cluster is created via the Console or eksctl, connect your client:
 
-  AK*********BSER # Acesskey
-  
-  cmN*****************U  #secretkey
-  
-  us-west-1 #region
-  
-  json #output format
+Update KubeConfig
+Bash
 
-.##### Get KubeConfig file #####
+aws eks update-kubeconfig --name eks-demo --region us-west-1
+Deploy Amazon EBS CSI Driver
+Necessary for dynamic volume provisioning using EBS storage classes:
 
-aws eks update-kubeconfig --name <ClusterName> --region <RegionName> 
+Bash
 
-aws eks update-kubeconfig --name eks-demo --region us-west-1 
+kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-cs-driver/deploy/kubernetes/overlays/stable/?ref=release-1.12"
+Author
+Jimmy96 T.
 
-##### Verify Kubectl #####
-kubectl get nodes
-kubectl get pods
-
-
-# Install git if not already installed before exeucting below command as we are applying k8s manifests of EBSCSI driver direclyt from git hub.
-
-sudo yum install git -y 
-
-
-Deploy AWSEBSSCSI Driver Plugin(For Dynamic Volumes with EBS StoragClass)
-=========================================================================
-kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.12"
+DevOps & Cloud Specialist
 
