@@ -62,6 +62,7 @@ Necessary for dynamic volume provisioning using EBS storage classes:
 Bash
 
 kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-cs-driver/deploy/kubernetes/overlays/stable/?ref=release-1.12"
+
 Author
 Jimmy96 T.
 
